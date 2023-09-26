@@ -1,0 +1,167 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Booking</title>
+    <style>
+        body{
+            margin: 100px 350px;
+            background-color:aquamarine;
+            
+        }
+        .container {
+            width: 200px;
+            margin-left: 300px;
+            padding: 10px 0px 5px 10px;
+            background-color:rgb(3, 105, 105);
+            color: aliceblue;
+        }
+        #list-of-bookings{
+            font-family:sans-serif;
+            border: 2px solid;
+            width: 800px;
+            height: 300px;
+            overflow-y: auto ;
+            padding-top: 20px;
+            background-color:darkturquoise;
+            align-content: center;
+        }
+        h1,h2{
+            margin-left: 250px;
+            font-size:xx-large;
+            font-family: sans-serif;
+            color:rgb(79, 1, 1);
+            
+        }
+        #delete{
+            margin: 2px 2px;
+            background-color: red;
+            color: azure;
+            border-color:brown;
+            cursor: pointer;
+        }
+        #delete:hover{
+            box-shadow: 2px 2px #888888;
+        }
+        #delete:active{
+            box-shadow: 2px 2px #3c3c3c;
+        }
+        #edit{
+            background-color: rgb(2, 102, 45);
+            color: azure;
+            border-color:rgb(10, 10, 10);
+            cursor: pointer;
+        }
+        #edit:hover{
+            box-shadow: 1px 2px #272727;
+        }
+        #edit:active{
+            box-shadow: 1px 2px #3c3c3c;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Appointment Booking</h1>
+    <div class="container">
+        <form onsubmit="savetodatabase(event)">
+            <label>UserName</label>
+            <input type="text" name="username" placeholder="username" id="username">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="email" id="email">
+            <label>Phonenumber</label>
+            <input type="text" name="phonenumber" placeholder="Phonenumber" id="phonenumber">
+            <button>Submit</button>
+        </form>
+    </div>
+    <h2>List of Appointments</h2>
+    <ul id="list-of-bookings"></ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script>
+        function savetodatabase(event){
+            event.preventDefault();
+            const username = event.target.username.value;
+            const email = event.target.email.value;
+            const phonenumber = event.target.phonenumber.value;
+            const obj={
+                username,
+                email,
+                phonenumber
+            }
+            //console.log(obj);
+            axios.post("http://localhost:3000/user/add-user", obj)
+            .then((response) =>{
+                
+                console.log(response.data.newUserdetail)
+                document.getElementById("username").value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('phonenumber').value ='';
+                displayonScreen(response.data.newUserdetail);
+            })
+            .catch(err=>{
+                console.log('failed')
+                document.body.innerHTML = document.body.innerHTML + "Something went wrong";
+            })
+    
+        }
+
+        function displayonScreen(obj){
+                const parentelem = document.getElementById("list-of-bookings");
+                const childelem = document.createElement('ul');
+                childelem.setAttribute('id',obj.id);
+                childelem.textContent = obj.username + '-' + obj.email + '-' + obj.phonenumber + " ";
+
+                const deletebtn = document.createElement('input');
+                deletebtn.type = 'button';
+                deletebtn.value = 'Delete';
+                deletebtn.setAttribute('id','delete');
+
+                const editbtn = document.createElement('input');
+                editbtn.type = 'button';
+                editbtn.value = 'Edit';
+                editbtn.setAttribute('id','edit');
+
+                
+
+                deletebtn.onclick = ()=>{
+                    console.log('delete started');
+                    axios.delete(`http://localhost:3000/user/delete-user/${obj.id}`)
+                    .then(res=>{
+                        alert('click ok to delete');
+                        parentelem.removeChild(childelem);
+                        console.log('deleted');
+                    }).catch(err=>{
+                        console.log('cannot delete user from display')
+                    })
+                }
+
+                editbtn.onclick = ()=>{
+                    parentelem.removeChild(childelem);
+                    document.getElementById("username").value = obj.username;
+                    document.getElementById('email').value = obj.email;
+                    document.getElementById('phonenumber').value =obj.phonenumber;
+                }
+                childelem.appendChild(deletebtn);
+                childelem.appendChild(editbtn);
+                parentelem.appendChild(childelem);
+
+            }
+
+            window.addEventListener("DOMContentLoaded",()=>{
+                axios.get("http://localhost:3000/user/get-users")
+                .then(response =>{
+                    //console.log(response.data.userdetails);
+                    for(var i=0;i<response.data.userdetails.length;i++){
+                        displayonScreen(response.data.userdetails[i])
+                    }
+                }).catch(err => {
+                    console.log(err)
+                    document.body.innerHTML = document.body.innerHTML + "Something went wrong";
+                })
+            })
+
+    </script>
+    
+</body>
+</html>
